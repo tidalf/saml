@@ -3,9 +3,11 @@ package saml
 import (
 	"bytes"
 	"compress/flate"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -13,7 +15,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/crewjam/go-xmlsec"
+	xmlsec "github.com/crewjam/go-xmlsec"
+	"github.com/ma314smith/signedxml"
 )
 
 // ServiceProvider implements SAML Service provider.
@@ -347,14 +350,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 
 	var assertion *Assertion
 	if resp.EncryptedAssertion == nil {
-		if err := xmlsec.Verify(sp.getIDPSigningCert(), rawResponseBuf,
-			xmlsec.SignatureOptions{
-				XMLID: []xmlsec.XMLIDOption{{
-					ElementName:      "Response",
-					ElementNamespace: "urn:oasis:names:tc:SAML:2.0:protocol",
-					AttributeName:    "ID",
-				}},
-			}); err != nil {
+		if err := validateSignature(rawResponseBuf, sp.getIDPSigningCert()); err != nil {
 			retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
 			return nil, retErr
 		}
@@ -370,14 +366,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 		}
 		retErr.Response = string(plaintextAssertion)
 
-		if err := xmlsec.Verify(sp.getIDPSigningCert(), plaintextAssertion,
-			xmlsec.SignatureOptions{
-				XMLID: []xmlsec.XMLIDOption{{
-					ElementName:      "Assertion",
-					ElementNamespace: "urn:oasis:names:tc:SAML:2.0:assertion",
-					AttributeName:    "ID",
-				}},
-			}); err != nil {
+		if err := validateSignature(plaintextAssertion, sp.getIDPSigningCert()); err != nil {
 			retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
 			return nil, retErr
 		}
@@ -392,6 +381,26 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 	}
 
 	return assertion, nil
+}
+
+func validateSignature(plaintextAssertion []byte, signingCert []byte) error {
+	validator, err := signedxml.NewValidator(string(plaintextAssertion))
+	if err != nil {
+		return err
+	}
+
+	pemBlock, _ := pem.Decode([]byte(signingCert))
+	if pemBlock == nil {
+		return errors.New("Could not parse public key")
+	}
+
+	cert, err := x509.ParseCertificate(pemBlock.Bytes)
+	if err != nil {
+		return err
+	}
+	validator.Certificates = append(validator.Certificates, *cert)
+
+	return validator.Validate()
 }
 
 // validateAssertion checks that the conditions specified in assertion match

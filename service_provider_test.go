@@ -213,8 +213,9 @@ uzZ1y9sNHH6kH8GFnvS2MqyHiNz0h0Sq/q6n+w==</ds:X509Certificate>
 	req.PostForm.Set("SAMLResponse", SamlResponse)
 	assertion, err := s.ParseResponse(&req, []string{"id-d40c15c104b52691eccf0a2a5c8a15595be75423"})
 	if err != nil {
-		c.Logf("%s", err.(*InvalidResponseError).PrivateErr)
+		c.Logf("ParseResponse: %s", err.(*InvalidResponseError).PrivateErr)
 	}
+
 	c.Assert(err, IsNil)
 
 	c.Assert(assertion.Subject.NameID.Value, DeepEquals, "ross@kndr.org")
@@ -564,7 +565,7 @@ func (test *ServiceProviderTest) TestInvalidResponses(c *C) {
 	s.IDPMetadata.IDPSSODescriptor.KeyDescriptor[0].KeyInfo.Certificate = "invalid"
 	req.PostForm.Set("SAMLResponse", base64.StdEncoding.EncodeToString([]byte(test.SamlResponse)))
 	_, err = s.ParseResponse(&req, []string{"id-9e61753d64e928af5a7a341a97f420c9"})
-	c.Assert(err.(*InvalidResponseError).PrivateErr, ErrorMatches, "failed to verify signature on response: .*xmlSecOpenSSLAppKeyLoadMemory.*")
+	c.Assert(err.(*InvalidResponseError).PrivateErr, ErrorMatches, "failed to verify signature on response: asn1: structure error: tags don't match .*")
 }
 
 func (test *ServiceProviderTest) TestInvalidAssertions(c *C) {
