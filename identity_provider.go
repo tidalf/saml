@@ -16,7 +16,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/crewjam/go-xmlsec"
+	"github.com/crewjam/go-xmlsec/xmldsig"
+	"github.com/crewjam/go-xmlsec/xmlenc"
 )
 
 // Session represents a user session. It is returned by the
@@ -338,7 +339,7 @@ func (req *IdpAuthnRequest) Validate() error {
 // MakeAssertion produces a SAML assertion for the
 // given request and assigns it to req.Assertion.
 func (req *IdpAuthnRequest) MakeAssertion(session *Session) error {
-	signatureTemplate := xmlsec.DefaultSignature([]byte(req.IDP.Certificate))
+	signatureTemplate := xmldsig.DefaultSignature([]byte(req.IDP.Certificate))
 	attributes := []Attribute{}
 	if session.UserName != "" {
 		attributes = append(attributes, Attribute{
@@ -475,14 +476,14 @@ func (req *IdpAuthnRequest) MarshalAssertion() error {
 		return err
 	}
 
-	buf, err = xmlsec.Sign([]byte(req.IDP.Key),
-		buf, xmlsec.SignatureOptions{})
+	buf, err = xmldsig.Sign([]byte(req.IDP.Key),
+		buf, xmldsig.SignatureOptions{})
 	if err != nil {
 		return err
 	}
 
-	buf, err = xmlsec.Encrypt(getSPEncryptionCert(req.ServiceProviderMetadata),
-		buf, xmlsec.EncryptOptions{})
+	buf, err = xmlenc.Encrypt(getSPEncryptionCert(req.ServiceProviderMetadata),
+		buf, xmlenc.EncryptOptions{})
 	if err != nil {
 		return err
 	}

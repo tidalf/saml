@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/crewjam/go-xmlsec"
+	"github.com/crewjam/go-xmlsec/xmldsig"
 	"github.com/crewjam/saml/testsaml"
 	"github.com/dgrijalva/jwt-go"
 	. "gopkg.in/check.v1"
@@ -443,17 +443,17 @@ func (test *IdentityProviderTest) TestMakeAssertion(c *C) {
 			Format: "XXX",
 			Value:  "https://idp.example.com/saml/metadata",
 		},
-		Signature: &xmlsec.Signature{
-			CanonicalizationMethod: xmlsec.Method{Algorithm: "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"},
-			SignatureMethod:        xmlsec.Method{Algorithm: "http://www.w3.org/2000/09/xmldsig#rsa-sha1"},
-			ReferenceTransforms: []xmlsec.Method{
+		Signature: &xmldsig.Signature{
+			CanonicalizationMethod: xmldsig.Method{Algorithm: "http://www.w3.org/TR/2001/REC-xml-c14n-20010315"},
+			SignatureMethod:        xmldsig.Method{Algorithm: "http://www.w3.org/2000/09/xmldsig#rsa-sha1"},
+			ReferenceTransforms: []xmldsig.Method{
 				{Algorithm: "http://www.w3.org/2000/09/xmldsig#enveloped-signature"},
 			},
-			DigestMethod:    xmlsec.Method{Algorithm: "http://www.w3.org/2000/09/xmldsig#sha1"},
+			DigestMethod:    xmldsig.Method{Algorithm: "http://www.w3.org/2000/09/xmldsig#sha1"},
 			DigestValue:     "",
 			SignatureValue:  "",
 			KeyName:         "",
-			X509Certificate: &xmlsec.SignatureX509Data{X509Certificate: "MIIB7zCCAVgCCQDFzbKIp7b3MTANBgkqhkiG9w0BAQUFADA8MQswCQYDVQQGEwJVUzELMAkGA1UECAwCR0ExDDAKBgNVBAoMA2ZvbzESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTEzMTAwMjAwMDg1MVoXDTE0MTAwMjAwMDg1MVowPDELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkdBMQwwCgYDVQQKDANmb28xEjAQBgNVBAMMCWxvY2FsaG9zdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA1PMHYmhZj308kWLhZVT4vOulqx/9ibm5B86fPWwUKKQ2i12MYtz07tzukPymisTDhQaqyJ8Kqb/6JjhmeMnEOdTvSPmHO8m1ZVveJU6NoKRn/mP/BD7FW52WhbrUXLSeHVSKfWkNk6S4hk9MV9TswTvyRIKvRsw0X/gfnqkroJcCAwEAATANBgkqhkiG9w0BAQUFAAOBgQCMMlIO+GNcGekevKgkakpMdAqJfs24maGb90DvTLbRZRD7Xvn1MnVBBS9hzlXiFLYOInXACMW5gcoRFfeTQLSouMM8o57h0uKjfTmuoWHLQLi6hnF+cvCsEFiJZ4AbF+DgmO6TarJ8O05t8zvnOwJlNCASPZRH/JmF8tX0hoHuAQ=="},
+			X509Certificate: &xmldsig.SignatureX509Data{X509Certificate: "MIIB7zCCAVgCCQDFzbKIp7b3MTANBgkqhkiG9w0BAQUFADA8MQswCQYDVQQGEwJVUzELMAkGA1UECAwCR0ExDDAKBgNVBAoMA2ZvbzESMBAGA1UEAwwJbG9jYWxob3N0MB4XDTEzMTAwMjAwMDg1MVoXDTE0MTAwMjAwMDg1MVowPDELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkdBMQwwCgYDVQQKDANmb28xEjAQBgNVBAMMCWxvY2FsaG9zdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA1PMHYmhZj308kWLhZVT4vOulqx/9ibm5B86fPWwUKKQ2i12MYtz07tzukPymisTDhQaqyJ8Kqb/6JjhmeMnEOdTvSPmHO8m1ZVveJU6NoKRn/mP/BD7FW52WhbrUXLSeHVSKfWkNk6S4hk9MV9TswTvyRIKvRsw0X/gfnqkroJcCAwEAATANBgkqhkiG9w0BAQUFAAOBgQCMMlIO+GNcGekevKgkakpMdAqJfs24maGb90DvTLbRZRD7Xvn1MnVBBS9hzlXiFLYOInXACMW5gcoRFfeTQLSouMM8o57h0uKjfTmuoWHLQLi6hnF+cvCsEFiJZ4AbF+DgmO6TarJ8O05t8zvnOwJlNCASPZRH/JmF8tX0hoHuAQ=="},
 		},
 		Subject: &Subject{
 			NameID: &NameID{Format: "urn:oasis:names:tc:SAML:2.0:nameid-format:transient", NameQualifier: "https://idp.example.com/saml/metadata", SPNameQualifier: "https://sp.example.com/saml2/metadata", Value: ""},

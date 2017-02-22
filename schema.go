@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/crewjam/go-xmlsec"
+	"github.com/crewjam/go-xmlsec/xmldsig"
 )
 
 // AuthnRequest represents the SAML object of the same name, a request from a service provider
@@ -24,10 +24,10 @@ type AuthnRequest struct {
 	// and is typically accompanied by the AssertionConsumerServiceURL attribute.
 	ProtocolBinding string `xml:",attr"`
 
-	Version      string            `xml:",attr"`
-	Issuer       Issuer            `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
-	Signature    *xmlsec.Signature `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
-	NameIDPolicy NameIDPolicy      `xml:"urn:oasis:names:tc:SAML:2.0:protocol NameIDPolicy"`
+	Version      string             `xml:",attr"`
+	Issuer       Issuer             `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
+	Signature    *xmldsig.Signature `xml:"http://www.w3.org/2000/09/xmldsig# Signature"`
+	NameIDPolicy NameIDPolicy       `xml:"urn:oasis:names:tc:SAML:2.0:protocol NameIDPolicy"`
 }
 
 func (a *AuthnRequest) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
@@ -131,7 +131,7 @@ type Assertion struct {
 	IssueInstant       time.Time `xml:",attr"`
 	Version            string    `xml:",attr"`
 	Issuer             *Issuer   `xml:"urn:oasis:names:tc:SAML:2.0:assertion Issuer"`
-	Signature          *xmlsec.Signature
+	Signature          *xmldsig.Signature
 	Subject            *Subject
 	Conditions         *Conditions
 	AuthnStatement     *AuthnStatement

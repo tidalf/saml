@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"time"
 
-	xmlsec "github.com/crewjam/go-xmlsec"
+	"github.com/crewjam/go-xmlsec/xmlenc"
 	"github.com/ma314smith/signedxml"
 )
 
@@ -359,7 +359,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 
 	// decrypt the response
 	if resp.EncryptedAssertion != nil {
-		plaintextAssertion, err := xmlsec.Decrypt([]byte(sp.Key), resp.EncryptedAssertion.EncryptedData)
+		plaintextAssertion, err := xmlenc.Decrypt([]byte(sp.Key), resp.EncryptedAssertion.EncryptedData)
 		if err != nil {
 			retErr.PrivateErr = fmt.Errorf("failed to decrypt response: %s", err)
 			return nil, retErr
