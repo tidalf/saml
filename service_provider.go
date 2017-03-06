@@ -8,7 +8,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
-	"net/http"
 	"net/url"
 	"regexp"
 	"time"
@@ -334,14 +333,14 @@ func (ivr *InvalidResponseError) Error() string {
 // properties are useful in describing which part of the parsing process
 // failed. However, to discourage inadvertent disclosure the diagnostic
 // information, the Error() method returns a static string.
-func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs []string) (*Assertion, error) {
+func (sp *ServiceProvider) ParseResponse(q url.Values, possibleRequestIDs []string) (*Assertion, error) {
 	now := TimeNow()
 	retErr := &InvalidResponseError{
 		Now:      now,
-		Response: req.PostForm.Get("SAMLResponse"),
+		Response: q.Get("SAMLResponse"),
 	}
 
-	rawResponseBuf, err := base64.StdEncoding.DecodeString(req.PostForm.Get("SAMLResponse"))
+	rawResponseBuf, err := base64.StdEncoding.DecodeString(q.Get("SAMLResponse"))
 	if err != nil {
 		retErr.PrivateErr = fmt.Errorf("cannot parse base64: %s", err)
 		return nil, retErr
@@ -356,17 +355,6 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 	}
 	if resp.Destination != sp.AcsURL {
 		retErr.PrivateErr = fmt.Errorf("`Destination` does not match AcsURL (expected %q)", sp.AcsURL)
-		return nil, retErr
-	}
-
-	requestIDvalid := false
-	for _, possibleRequestID := range possibleRequestIDs {
-		if resp.InResponseTo == possibleRequestID {
-			requestIDvalid = true
-		}
-	}
-	if !requestIDvalid {
-		retErr.PrivateErr = fmt.Errorf("`InResponseTo` does not match any of the possible request IDs (expected %v)", possibleRequestIDs)
 		return nil, retErr
 	}
 
@@ -442,16 +430,6 @@ func (sp *ServiceProvider) validateAssertion(assertion *Assertion, possibleReque
 	}
 	if assertion.Issuer.Value != sp.IDPMetadata.EntityID {
 		return fmt.Errorf("issuer is not %q", sp.IDPMetadata.EntityID)
-	}
-	requestIDvalid := false
-	for _, possibleRequestID := range possibleRequestIDs {
-		if assertion.Subject.SubjectConfirmation.SubjectConfirmationData.InResponseTo == possibleRequestID {
-			requestIDvalid = true
-			break
-		}
-	}
-	if !requestIDvalid {
-		return fmt.Errorf("SubjectConfirmation one of the possible request IDs (%v)", possibleRequestIDs)
 	}
 	if assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient != sp.AcsURL {
 		return fmt.Errorf("SubjectConfirmation Recipient is not %s", sp.AcsURL)
