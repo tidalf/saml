@@ -7,12 +7,11 @@ import (
 	"encoding/pem"
 	"encoding/xml"
 	"fmt"
+	xmlsec "github.com/crewjam/go-xmlsec"
 	"html/template"
 	"net/url"
 	"regexp"
 	"time"
-
-	xmlsec "github.com/crewjam/go-xmlsec"
 )
 
 type NameIDFormat string
@@ -381,8 +380,17 @@ func (sp *ServiceProvider) ParseResponse(q url.Values, possibleRequestIDs []stri
 					AttributeName:    "ID",
 				}},
 			}); err != nil {
-			retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
-			return nil, retErr
+			if err := xmlsec.Verify(sp.getIDPSigningCert(), rawResponseBuf,
+				xmlsec.SignatureOptions{
+					XMLID: []xmlsec.XMLIDOption{{
+						ElementName:      "Assertion",
+						ElementNamespace: "urn:oasis:names:tc:SAML:2.0:assertion",
+						AttributeName:    "ID",
+					}},
+				}); err != nil {
+				retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
+				return nil, retErr
+			}
 		}
 		assertion = resp.Assertion
 	}
